@@ -50,22 +50,19 @@ public class ULTreeMap<K extends Comparable<K>,V> implements Cloneable {
     }
 
     public void insert(K key, V value) throws DuplicateKeyException {
-        if (key == null) {
-            throw new NullPointerException();
+        if (key != null) {
+            root = insert(root, key, value);
         }
-        root = insert(root, key, value);
     }
 
     public void put(K key, V value) {
-        if (key == null) {
-            throw new NullPointerException();
-        }
-        try {
-            insert(key, value);
-        }
-        catch(DuplicateKeyException e) {
-            Node node = lookupNode(root, key);
-            node.value = value;
+        if (key != null) {
+            try {
+                insert(key, value);
+            } catch (DuplicateKeyException e) {
+                Node node = lookupNode(root, key);
+                node.value = value;
+            }
         }
     }
 
