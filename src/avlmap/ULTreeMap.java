@@ -27,6 +27,18 @@ public class ULTreeMap<K extends Comparable<K>,V> implements Cloneable {
             right = null;
         }
     }
+
+    public static class Mapping<K, V> {
+        private K key;
+        private V value;
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+    }
     private Node root;
     private Comparator<K> comparator;
     private int size;
