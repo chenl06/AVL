@@ -1,4 +1,4 @@
-package wol;
+package avlmap;
 
 import java.util.ArrayList;
 import java.util.Collection;

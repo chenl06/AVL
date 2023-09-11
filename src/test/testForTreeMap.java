@@ -1,7 +1,7 @@
 package test;
 import org.junit.Test;
-import wol.DuplicateKeyException;
-import wol.ULTreeMap;
+import avlmap.DuplicateKeyException;
+import avlmap.ULTreeMap;
 
 import java.util.*;
 

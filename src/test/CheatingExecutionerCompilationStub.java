@@ -3,7 +3,7 @@ package test;
 import java.util.Arrays;
 import java.util.Collection;
 
-import wol.CheatingExecutioner;
+import avlmap.CheatingExecutioner;
 
 /**
  * This class is designed to help you test whether your CheatingExecutioner code will compile in my JUnit tests.

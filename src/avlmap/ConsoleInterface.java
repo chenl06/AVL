@@ -1,4 +1,4 @@
-package wol;
+package avlmap;
 
 import java.io.PrintStream;
 import java.util.*;

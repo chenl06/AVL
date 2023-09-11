@@ -1,4 +1,4 @@
-package wol;
+package avlmap;
 /**
  * Default comparator for ULTREEMAP
  *@author Edward Oh

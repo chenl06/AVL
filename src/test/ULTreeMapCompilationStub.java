@@ -2,7 +2,7 @@ package test;
 
 import java.util.Collection;
 
-import wol.ULTreeMap;
+import avlmap.ULTreeMap;
 
 /**
  * This class is designed to help you test whether your ULTreeMap code will compile in my JUnit tests.
