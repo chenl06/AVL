@@ -7,7 +7,7 @@ package avlmap;
 
 import java.util.Comparator;
 
-public class ComparableComparator<T extends Comparable<T>> implements Comparator<T> {
+public class ComparableComparator<T> implements Comparator<T> {
     public ComparableComparator() {
         //Default does nothing
     }
@@ -19,6 +19,6 @@ public class ComparableComparator<T extends Comparable<T>> implements Comparator
      * @return
      */
     public int compare(T lhs, T rhs) {
-        return lhs.compareTo(rhs);
+        return lhs.toString().compareTo(rhs.toString());
     }
 }

@@ -176,4 +176,28 @@ public class testForTreeMap {
         assertFalse(map2.containsKey("D"));
     }
 
+    @Test
+    public void testKeys() {
+        ULTreeMap<String, Integer> map1 = new ULTreeMap<>();
+        map1.insert("A", 1);
+        map1.insert("B", 2);
+        map1.insert("C", 3);
+        //test size
+        assertEquals(3, map1.size());
+        Collection<String> collection = map1.keys();
+        assertTrue(collection.contains("A"));
+        assertTrue(collection.contains("B"));
+        assertTrue(collection.contains("C"));
+
+    }
+    @Test
+    public void testClear() {
+        ULTreeMap<String, Integer> map1 = new ULTreeMap<>();
+        map1.insert("A", 1);
+        map1.insert("B", 2);
+        map1.insert("C", 3);
+        map1.clear();
+        assertTrue(map1.empty());
+    }
+
 }
