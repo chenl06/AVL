@@ -10,7 +10,7 @@ import java.util.List;
  * @author Edward
  **/
 
-public class ULTreeMap<K extends Comparable<K>,V> implements Cloneable {
+public class ULTreeMap<K,V> implements Cloneable {
     /**
      * Node class to contain key and value
      */
@@ -47,9 +47,9 @@ public class ULTreeMap<K extends Comparable<K>,V> implements Cloneable {
         this(new ComparableComparator<K>());
     }
 
-    public ULTreeMap(Comparator<K> comparator) {
+    public ULTreeMap(Comparator<K> compare) {
         root = null;
-        this.comparator = comparator;
+        this.comparator = compare;
         size = 0;
     }
 
