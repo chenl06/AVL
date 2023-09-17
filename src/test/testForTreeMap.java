@@ -2,10 +2,13 @@ package test;
 import org.junit.Test;
 import avlmap.DuplicateKeyException;
 import avlmap.ULTreeMap;
-
 import java.util.*;
-
 import static org.junit.Assert.*;
+/**
+ * Testing for BST
+ * @author Edward Oh
+ * @author Chen Luo
+ */
 public class testForTreeMap {
     @Test
     public void testInsert() {

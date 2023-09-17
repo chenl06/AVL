@@ -17,14 +17,14 @@ public class ULTreeMap<K,V> implements Cloneable {
     private class Node {
         K key;
         V value;
-        private Node left;
-        private Node right;
+        Node left;
+        Node right;
+        int height;
 
         public Node(K key, V value) {
             this.key = key;
             this.value = value;
-            left = null;
-            right = null;
+            this.height = 0;
         }
     }
 
@@ -34,7 +34,6 @@ public class ULTreeMap<K,V> implements Cloneable {
         public K getKey() {
             return key;
         }
-
         public V getValue() {
             return value;
         }
@@ -64,6 +63,8 @@ public class ULTreeMap<K,V> implements Cloneable {
     public void insert(K key, V value) throws DuplicateKeyException {
         if (key != null) {
             root = insert(root, key, value);
+            updateHeight(root);
+            root = rebalance(root);
         }
     }
 
@@ -90,6 +91,11 @@ public class ULTreeMap<K,V> implements Cloneable {
 
     public void erase(K key) {
         root = erase(root, key);
+        if (root != null) {
+            updateHeight(root);
+            root = rebalance(root);
+        }
+
     }
 
     public Collection<K> keys() {
@@ -109,6 +115,11 @@ public class ULTreeMap<K,V> implements Cloneable {
     public void clear() {
         root = null;
         size = 0;
+    }
+
+    public int heightOfKey(K key) {
+        Node node = lookupNode(root, key);
+        return height(node);
     }
 
     /**
@@ -131,8 +142,7 @@ public class ULTreeMap<K,V> implements Cloneable {
             // and recursively call insert again
             if (compare < 0) {
                 node.left = insert(node.left, key, value);
-            }
-            else if (compare > 0) {
+            } else if (compare > 0) {
                 node.right = insert(node.right, key, value);
             }
             // if keys are equaled duplicated key found
@@ -140,6 +150,7 @@ public class ULTreeMap<K,V> implements Cloneable {
                 throw new DuplicateKeyException();
             }
         }
+        updateHeight(node);
         return node;
     }
 
@@ -181,10 +192,7 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @return removed node
      */
     private Node erase(Node node, K key) {
-        if (node == null) {
-            // do nothing
-        }
-        else {
+        if (node != null) {
             int compare = comparator.compare(key, node.key);
             // by comparing the key we either transverse to right or left
             // and recursively call erase again
@@ -208,6 +216,7 @@ public class ULTreeMap<K,V> implements Cloneable {
                 }
             }
         }
+        updateHeight(root);
         return node;
     }
 
@@ -244,5 +253,103 @@ public class ULTreeMap<K,V> implements Cloneable {
             inorder(node.right, list);
         }
     }
+
+    /**
+     * Return the height of a sub tree stored in node.height
+     * @param node node
+     * @return height of the node or -1 if it is emoty
+     */
+    private int height(Node node) {
+        return node != null ? node.height : -1;
+    }
+
+    /**
+     * Update the height of the node after rebalacning
+     * @param node
+     */
+    private void updateHeight(Node node) {
+        int leftChildHeight = height(node.left);
+        int rightChildHeight = height(node.right);
+        node.height = Math.max(leftChildHeight, rightChildHeight) + 1;
+    }
+
+    /**
+     * Calculating balancing factor
+     * @param node node
+     * @return balanced tree number
+     */
+    private int balanceFactor(Node node) {
+        return height(node.right) - height(node.left);
+    }
+
+    /**
+     * Right rotation
+     * @param node
+     * @return
+     */
+    private Node rotateRight(Node node) {
+        Node leftChild = node.left;
+
+        node.left = leftChild.right;
+        leftChild.right = node;
+
+        updateHeight(node);
+        updateHeight(leftChild);
+
+        return leftChild;
+    }
+
+    /**
+     * Left rotation
+     * @param node
+     * @return
+     */
+    private Node rotateLeft(Node node) {
+        Node rightChild = node.right;
+
+        node.right = rightChild.left;
+        rightChild.left = node;
+
+        updateHeight(node);
+        updateHeight(rightChild);
+
+        return rightChild;
+    }
+
+    /**
+     *
+     * @param node
+     * @return
+     */
+    private Node rebalance(Node node) {
+        int balanceFactor = balanceFactor(node);
+
+        // Left-heavy?
+        if (balanceFactor < -1) {
+            if (balanceFactor(node.left) <= 0) {    // Case 1
+                // Rotate right
+                node = rotateRight(node);
+            } else {                                // Case 2
+                // Rotate left-right
+                node.left = rotateLeft(node.left);
+                node = rotateRight(node);
+            }
+        }
+
+        // Right-heavy?
+        if (balanceFactor > 1) {
+            if (balanceFactor(node.right) >= 0) {    // Case 3
+                // Rotate left
+                node = rotateLeft(node);
+            } else {                                 // Case 4
+                // Rotate right-left
+                node.right = rotateRight(node.right);
+                node = rotateLeft(node);
+            }
+        }
+
+        return node;
+    }
+
 
 }
