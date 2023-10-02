@@ -1,16 +1,14 @@
 package avlmap;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+
 /**
  * Implementation of ULTreeMap using BST
  * @author Chen
  * @author Edward
  **/
 
-public class ULTreeMap<K,V> implements Cloneable {
+public class ULTreeMap<K,V> implements Cloneable, Iterable<ULTreeMap.Mapping<K, V>> {
     /**
      * Node class to contain key and value
      */
@@ -19,12 +17,13 @@ public class ULTreeMap<K,V> implements Cloneable {
         V value;
         Node left;
         Node right;
+        Node parent;
         int height;
 
         public Node(K key, V value) {
             this.key = key;
             this.value = value;
-            this.height = 0;
+            this.height = 1;
         }
     }
 
@@ -41,7 +40,6 @@ public class ULTreeMap<K,V> implements Cloneable {
     private Node root;
     private Comparator<K> comparator;
     private int size;
-
     public ULTreeMap(){
         this(new ComparableComparator<K>());
     }
@@ -52,20 +50,22 @@ public class ULTreeMap<K,V> implements Cloneable {
         size = 0;
     }
 
+    /**
+     * Shallow copy of the treemap
+     * @return treemap
+     */
     @Override
     public ULTreeMap<K, V> clone() {
-        ULTreeMap<K, V> clone = new ULTreeMap<>();
-        clone.size = size;
-        clone.comparator = comparator;
-        return clone;
+        ULTreeMap<K, V> clonedMap = new ULTreeMap<>();
+        clonedMap.root = cloneTree(root, clonedMap);
+        return clonedMap;
     }
 
     public void insert(K key, V value) throws DuplicateKeyException {
-        if (key != null) {
-            root = insert(root, key, value);
-            updateHeight(root);
-            root = rebalance(root);
+        if (key == null) {
+            throw new NullPointerException("Key cannot be null");
         }
+        root = insert(root, key, value);
     }
 
     public void put(K key, V value) {
@@ -90,36 +90,91 @@ public class ULTreeMap<K,V> implements Cloneable {
     }
 
     public void erase(K key) {
-        root = erase(root, key);
         if (root != null) {
-            updateHeight(root);
-            root = rebalance(root);
+            root = erase(root, key);
+            size--;
         }
-
     }
-
-    public Collection<K> keys() {
-        List<K> list = new ArrayList<>();
-        inorder(root, list);
-        return list;
-    }
-
     public int size() {
         return size;
     }
 
+    /**
+     * Need to fix
+     * @return
+     */
     public boolean empty() {
         return root == null;
     }
 
+    /**
+     * Need to fix
+     */
     public void clear() {
-        root = null;
+        clearRec(root); // Start clearing from the root
+        root = null;    // Set the root to null after clearing
         size = 0;
     }
 
     public int heightOfKey(K key) {
         Node node = lookupNode(root, key);
-        return height(node);
+        return (node != null) ? node.height : -1;
+    }
+    @Override
+    public Iterator<Mapping<K, V>> iterator() {
+        return new ULTreeMapItrator();
+    }
+
+    /**
+     * Helper itrator class to irerate the map
+     */
+    private class ULTreeMapItrator implements Iterator<Mapping<K, V>> {
+        private Stack<Node> stack;
+        // Keep track of the expected modification count
+        private int expectedModificationCount = size;
+
+        public ULTreeMapItrator() {
+            stack = new Stack<>();
+            updateStack(root);
+        }
+
+        @Override
+        public boolean hasNext() {
+            // if size change during the iteration during the while or hasnext
+            if (expectedModificationCount != size) {
+                throw new ConcurrentModificationException();
+            }
+            return !stack.isEmpty();
+        }
+
+        @Override
+        public Mapping<K, V> next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Node currentNode = stack.pop();
+            updateStack(currentNode.right);
+            Mapping<K, V> mapping = new Mapping<>();
+            mapping.key = currentNode.key;
+            mapping.value = currentNode.value;
+            return mapping;
+        }
+
+        /**
+         * Push the element into the stack
+         * @param node
+         */
+        private void updateStack(Node node) {
+            while(node != null){
+                stack.add(node);
+                node = node.left;
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
@@ -151,9 +206,8 @@ public class ULTreeMap<K,V> implements Cloneable {
             }
         }
         updateHeight(node);
-        return node;
+        return rebalance(node);
     }
-
     /**
      * Helper method to find a node in a BST
      * @param node root
@@ -161,28 +215,10 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @return Node to search
      */
     private Node lookupNode(Node node, K key) {
-        Node returnNode;
-        // if node is null return null
-        if (node == null) {
-            returnNode = null;
-        }
-        else {
-            int compare = comparator.compare(key, node.key);
-            // by comparing the key we either transverse to right or left
-            // and recursively call lookup again
-            if (compare < 0 ){
-                returnNode = lookupNode(node.left, key);
-            }
-            else if (compare > 0) {
-                returnNode = lookupNode(node.right, key);
-            }
-            else {
-                returnNode = node;
-            }
-        }
-
-        return returnNode;
-
+        return (node == null) ? null
+                : (comparator.compare(key, node.key) < 0) ? lookupNode(node.left, key)
+                : (comparator.compare(key, node.key) > 0) ? lookupNode(node.right, key)
+                : node; // Key found or not found
     }
 
     /**
@@ -203,7 +239,6 @@ public class ULTreeMap<K,V> implements Cloneable {
                 node.right = erase(node.right, key);
             }
             else {
-                size--;
                 // has 0 or 1 child
                 if (node.left == null || node.right == null) {
                     node = removeNodeSimple(node);
@@ -212,12 +247,14 @@ public class ULTreeMap<K,V> implements Cloneable {
                 else {
                     Node smallest = findMin(node.right);
                     node.key = smallest.key;
-                    node.right = erase(node.right, node.key);
+                    node.value = smallest.value;
+                    node.height = smallest.height;
+                    node.right = erase(node.right, smallest.key);
                 }
             }
         }
-        updateHeight(root);
-        return node;
+        updateHeight(node);
+        return rebalance(node);
     }
 
     /**
@@ -226,7 +263,7 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @return node being removed
      */
     private Node removeNodeSimple(Node node) {
-        return (node.left != null) ? node.left : node.right;
+        return (node.left == null) ? node.right : node.left;
     }
 
     /**
@@ -235,32 +272,18 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @return smallest node
      */
     private Node findMin(Node node) {
-        while(node.left != null) {
+        while(node != null && node.left != null) {
             node = node.left;
         }
         return node;
     }
-
-    /**
-     * Inorder trasversal the tree
-     * @param node root
-     * @param list list of node
-     */
-    private void inorder(Node node, List<K> list) {
-        if (node != null) {
-            inorder(node.left, list);
-            list.add(node.key);
-            inorder(node.right, list);
-        }
-    }
-
     /**
      * Return the height of a sub tree stored in node.height
      * @param node node
      * @return height of the node or -1 if it is emoty
      */
     private int height(Node node) {
-        return node != null ? node.height : -1;
+        return (node != null) ? node.height : 0;
     }
 
     /**
@@ -268,9 +291,12 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @param node
      */
     private void updateHeight(Node node) {
-        int leftChildHeight = height(node.left);
-        int rightChildHeight = height(node.right);
-        node.height = Math.max(leftChildHeight, rightChildHeight) + 1;
+        if (node != null) {
+            int leftChildHeight = height(node.left);
+            int rightChildHeight = height(node.right);
+            node.height = Math.max(leftChildHeight, rightChildHeight) + 1;
+        }
+        // does nothing height is not update
     }
 
     /**
@@ -279,7 +305,11 @@ public class ULTreeMap<K,V> implements Cloneable {
      * @return balanced tree number
      */
     private int balanceFactor(Node node) {
-        return height(node.right) - height(node.left);
+        int value = 0;
+        if (node != null) {
+            value =  height(node.right) - height(node.left);
+        }
+        return value;
     }
 
     /**
@@ -317,7 +347,7 @@ public class ULTreeMap<K,V> implements Cloneable {
     }
 
     /**
-     *
+     * rebalancing treemap
      * @param node
      * @return
      */
@@ -349,6 +379,43 @@ public class ULTreeMap<K,V> implements Cloneable {
         }
 
         return node;
+    }
+
+    /**
+     * Clearing out entire treemap
+     * @param node
+     */
+    private void clearRec(Node node) {
+        if (node == null) {
+            return;
+        }
+
+        // Recursively clear left and right subtrees
+        clearRec(node.left);
+        clearRec(node.right);
+
+        // Release memory associated with the node
+        node.key = null;
+        node.value = null;
+        node.left = null;
+        node.right = null;
+        node.parent = null;
+    }
+
+    /**
+     * Helper method to copy the entire tree
+     * @param node
+     * @param clonedMap
+     * @return
+     */
+    private Node cloneTree(Node node, ULTreeMap<K, V> clonedMap) {
+        if (node == null) {
+            return null;
+        }
+        Node clonedNode = new Node(node.key, node.value);
+        clonedNode.left = cloneTree(node.left,clonedMap);
+        clonedNode.right = cloneTree(node.right, clonedMap);
+        return clonedNode;
     }
 
 

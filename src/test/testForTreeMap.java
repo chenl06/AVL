@@ -31,11 +31,6 @@ public class testForTreeMap {
 
         ULTreeMap<Integer, String> map1 = new ULTreeMap<>();
 
-        map1.insert(3, "three");
-        map1.insert(1, "one");
-        map1.insert(2, "two");
-        List<Integer> keys = new ArrayList<>(map1.keys());
-        assertEquals(Arrays.asList(1, 2, 3), keys);
     }
 
     @Test
@@ -168,31 +163,11 @@ public class testForTreeMap {
         // Test that the tree structure is copied correctly
         assertEquals(map1.size(), map2.size());
 
-        // Test that the keys and values are not copied
-        for (String entry: map1.keys()) {
-            assertFalse(map2.containsKey(entry));
-            assertNull(map2.lookup(entry));
-        }
-
         // Test that modifications to map1 do not affect map2
         map1.insert("D", 4);
         assertFalse(map2.containsKey("D"));
     }
 
-    @Test
-    public void testKeys() {
-        ULTreeMap<String, Integer> map1 = new ULTreeMap<>();
-        map1.insert("A", 1);
-        map1.insert("B", 2);
-        map1.insert("C", 3);
-        //test size
-        assertEquals(3, map1.size());
-        Collection<String> collection = map1.keys();
-        assertTrue(collection.contains("A"));
-        assertTrue(collection.contains("B"));
-        assertTrue(collection.contains("C"));
-
-    }
     @Test
     public void testClear() {
         ULTreeMap<String, Integer> map1 = new ULTreeMap<>();
